@@ -6,12 +6,9 @@ import { User } from '../users/user.modal';
 
 
 const register = async (req: Request, res: Response) => {
-  const { name, email, password, confirmPassword } = req.body;
+  const { name, email, password } = req.body;
   if (!name || !email || !password) {
     return res.status(400).json({ success: false, message: 'Name, email and password are required' });
-  }
-  if (password !== confirmPassword) {
-    return res.status(400).json({ success: false, message: 'Passwords do not match' });
   }
   const user = await AuthService.registerUser(name, email, password);
   res.json({ success: true, data: user });
