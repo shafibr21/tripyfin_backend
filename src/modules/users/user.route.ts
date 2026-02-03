@@ -3,10 +3,12 @@ import { authMiddleware } from '../../middlewares/auth.middleware';
 import { UserController } from './user.controller';
 import { multerUpload } from '../../config/multer.config';
 import { lobbyRoutes } from '../lobbies/lobby.routes';
+import { transactionRoutes } from '../transactions/transaction.routes';
 
 const router = express.Router();
 
-router.use('/lobbies', lobbyRoutes)
+router.use('/lobbies', lobbyRoutes);
+router.use('/transactions', transactionRoutes);
 router.get('/get-me', authMiddleware, UserController.getProfile);
 router.put(
   '/update-me',

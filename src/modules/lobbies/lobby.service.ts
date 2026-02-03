@@ -77,6 +77,35 @@ const getUserLobbies = async (userId: string) => {
     },
     { $unwind: "$leader" },
 
+    // Sanitize leader fields (remove sensitive fields)
+    {
+      $addFields: {
+        leader: {
+          _id: "$leader._id",
+          email: "$leader.email",
+          name: "$leader.name",
+          createdAt: "$leader.createdAt",
+          bio: "$leader.bio",
+          age: "$leader.age",
+          profilePictureUrl: "$leader.profilePictureUrl",
+        },
+      },
+    },
+
+    // Sanitize leader fields (remove sensitive fields)
+    {
+      $addFields: {
+        leader: {
+          _id: "$leader._id",
+          email: "$leader.email",
+          name: "$leader.name",
+          createdAt: "$leader.createdAt",
+          bio: "$leader.bio",
+          age: "$leader.age",
+          profilePictureUrl: "$leader.profilePictureUrl",
+        },
+      },
+    },
     // Members
     {
       $lookup: {
@@ -97,6 +126,26 @@ const getUserLobbies = async (userId: string) => {
       },
     },
 
+    // Sanitize memberUsers array to avoid leaking sensitive fields
+    {
+      $addFields: {
+        memberUsers: {
+          $map: {
+            input: "$memberUsers",
+            as: "u",
+            in: {
+              _id: "$$u._id",
+              email: "$$u.email",
+              name: "$$u.name",
+              createdAt: "$$u.createdAt",
+              bio: "$$u.bio",
+              age: "$$u.age",
+              profilePictureUrl: "$$u.profilePictureUrl",
+            },
+          },
+        },
+      },
+    },
     // Attach user object to each member
     {
       $addFields: {
@@ -207,6 +256,26 @@ const getLobbyDetails = async (
         as: "memberUser",
       },
     },
+    // Sanitize memberUser array to avoid leaking sensitive fields
+    {
+      $addFields: {
+        memberUser: {
+          $map: {
+            input: "$memberUser",
+            as: "u",
+            in: {
+              _id: "$$u._id",
+              email: "$$u.email",
+              name: "$$u.name",
+              createdAt: "$$u.createdAt",
+              bio: "$$u.bio",
+              age: "$$u.age",
+              profilePictureUrl: "$$u.profilePictureUrl",
+            },
+          },
+        },
+      },
+    },
     {
       $addFields: {
         "members.user": { $arrayElemAt: ["$memberUser", 0] },
@@ -254,6 +323,26 @@ const getLobbyDetails = async (
         as: "transactionCreator",
       },
     },
+    // Sanitize transactionCreator array
+    {
+      $addFields: {
+        transactionCreator: {
+          $map: {
+            input: "$transactionCreator",
+            as: "u",
+            in: {
+              _id: "$$u._id",
+              email: "$$u.email",
+              name: "$$u.name",
+              createdAt: "$$u.createdAt",
+              bio: "$$u.bio",
+              age: "$$u.age",
+              profilePictureUrl: "$$u.profilePictureUrl",
+            },
+          },
+        },
+      },
+    },
     {
       $addFields: {
         "transactions.creator": {
@@ -279,6 +368,27 @@ const getLobbyDetails = async (
         localField: "transactionDetails.userId",
         foreignField: "_id",
         as: "detailUsers",
+      },
+    },
+
+    // Sanitize detailUsers array
+    {
+      $addFields: {
+        detailUsers: {
+          $map: {
+            input: "$detailUsers",
+            as: "u",
+            in: {
+              _id: "$$u._id",
+              email: "$$u.email",
+              name: "$$u.name",
+              createdAt: "$$u.createdAt",
+              bio: "$$u.bio",
+              age: "$$u.age",
+              profilePictureUrl: "$$u.profilePictureUrl",
+            },
+          },
+        },
       },
     },
 
