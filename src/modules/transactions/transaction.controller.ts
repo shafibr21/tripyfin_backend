@@ -59,7 +59,7 @@ const addExpense = async (
 
     const transactionId = await transactionService.addExpense({
       lobbyId: id,
-      currentUserId,
+      userId: currentUserId,
       description,
       type,
       totalAmount,
