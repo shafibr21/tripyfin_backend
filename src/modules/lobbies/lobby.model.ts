@@ -40,7 +40,18 @@ const LobbySchema = new Schema<ILobby>(
       sparse: true,
     },
   },
-  { timestamps: { createdAt: "createdAt", updatedAt: false } }
+  {
+    timestamps: { createdAt: "createdAt", updatedAt: false },
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+// Virtual populate for lobby members
+LobbySchema.virtual("members", {
+  ref: "LobbyMember",
+  localField: "_id",
+  foreignField: "lobbyId",
+});
 
 export const Lobby = model<ILobby>("Lobby", LobbySchema);
