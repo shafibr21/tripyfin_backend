@@ -19,11 +19,19 @@ router.post(
   authMiddleware,
   transactionController.generateInviteCode
 );
-router.post(
-  "/lobbies/:id/join",
+
+router.get(
+  "/lobbies/:id",
   authMiddleware,
-  transactionController.joinLobby
+  transactionController.getLobbyTransactions
 );
+
+router.get(
+  "/lobbies/transaction-details/:id",
+  authMiddleware,
+  transactionController.getTransactionDetails
+);
+
 router.post(
   "/lobbies/join-with-deposit-and-code",
   authMiddleware,

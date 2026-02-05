@@ -150,32 +150,6 @@ const generateInviteCode = async (lobbyId: string, userId: string) => {
   }
 };
 
-const joinLobby = async (lobbyId: string, userId: string) => {
-  const lobby = await Lobby.findById(lobbyId);
-  if (!lobby) {
-    throw { status: 404, message: "Lobby not found" };
-  }
-
-  const exists = await LobbyMember.findOne({
-    lobbyId,
-    userId,
-  });
-
-  if (exists) {
-    throw {
-      status: 400,
-      message: "You are already a member of this lobby",
-    };
-  }
-
-  await LobbyMember.create({
-    lobbyId,
-    userId,
-    totalDeposited: 0,
-    individualBalance: 0,
-  });
-};
-
 const joinLobbyByCodeDeposit = async ({
   inviteCode,
   userId,
@@ -226,10 +200,106 @@ const joinLobbyByCodeDeposit = async ({
   return { lobbyId };
 };
 
+const getLobbyTransactions = async (lobbyId: string, userId: string) => {
+  const lobbyObjectId = new Types.ObjectId(lobbyId);
+  const userObjectId = new Types.ObjectId(userId);
+
+  // Ensure user is a member of the lobby
+  const member = await LobbyMember.findOne({
+    lobbyId: lobbyObjectId,
+    userId: userObjectId,
+  });
+
+  if (!member) {
+    throw { status: 403, message: "Access denied to this lobby" };
+  }
+
+  const transactions = await Transaction.find({ lobbyId: lobbyObjectId })
+    .sort({ createdAt: -1 })
+    .populate("createdBy", "name profilePictureUrl")
+    .lean();
+
+  return transactions.map((t: any) => ({
+    id: t._id,
+    description: t.description,
+    type: t.type,
+    totalAmount: Number(t.totalAmount),
+    createdAt: t.createdAt,
+    createdBy: t.createdBy
+      ? {
+          id: t.createdBy._id,
+          name: t.createdBy.name,
+          profilePictureUrl: t.createdBy.profilePictureUrl,
+        }
+      : null,
+  }));
+};
+
+const getTransactionDetails = async (
+  transactionId: string,
+  userId: string
+) => {
+  const transactionObjectId = new Types.ObjectId(transactionId);
+  const userObjectId = new Types.ObjectId(userId);
+
+  const transaction = await Transaction.findById(transactionObjectId)
+    .populate("createdBy", "name profilePictureUrl")
+    .lean();
+
+  if (!transaction) {
+    throw { status: 404, message: "Transaction not found" };
+  }
+
+  // Ensure the user belongs to this lobby
+  const lobbyId = transaction.lobbyId;
+  const member = await LobbyMember.findOne({
+    lobbyId,
+    userId: userObjectId,
+  });
+
+  if (!member) {
+    throw { status: 403, message: "Access denied to this transaction" };
+  }
+
+  const details = await TransactionDetail.find({
+    transactionId: transactionObjectId,
+  })
+    .populate("userId", "name profilePictureUrl")
+    .lean();
+
+  return {
+    id: transaction._id,
+    lobbyId: transaction.lobbyId,
+    description: transaction.description,
+    type: transaction.type,
+    totalAmount: Number(transaction.totalAmount),
+    createdAt: transaction.createdAt,
+    createdBy: transaction.createdBy
+      ? {
+          id: (transaction.createdBy as any)._id,
+          name: (transaction.createdBy as any).name,
+          profilePictureUrl: (transaction.createdBy as any).profilePictureUrl,
+        }
+      : null,
+    breakdown: details.map((d: any) => ({
+      id: d._id,
+      amount: Number(d.amount),
+      user: d.userId
+        ? {
+            id: d.userId._id,
+            name: d.userId.name,
+            profilePictureUrl: d.userId.profilePictureUrl,
+          }
+        : null,
+    })),
+  };
+};
+
 export const transactionService = {
   addDeposit,
   addExpense,
   generateInviteCode,
-  joinLobby,
   joinLobbyByCodeDeposit,
+  getLobbyTransactions,
+  getTransactionDetails,
 };
