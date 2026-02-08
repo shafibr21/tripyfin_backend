@@ -532,8 +532,56 @@ const getLobbyDetails = async (
   }
 };
 
+const getLobbySummary = async (lobbyId: string, userId: string) => {
+  const lobbyObjectId = new Types.ObjectId(lobbyId);
+  const userObjectId = new Types.ObjectId(userId);
+
+  const lobby = await Lobby.findById(lobbyObjectId).lean();
+  if (!lobby) return null;
+
+  const isMember = await LobbyMember.findOne({
+    lobbyId: lobbyObjectId,
+    userId: userObjectId,
+  });
+  if (!isMember) return { forbidden: true };
+
+  const [memberCount, transactionCount, transactionTotals] = await Promise.all([
+    LobbyMember.countDocuments({ lobbyId: lobbyObjectId }),
+    Transaction.countDocuments({ lobbyId: lobbyObjectId }),
+    Transaction.aggregate<{ _id: string; total: number }>([
+      { $match: { lobbyId: lobbyObjectId } },
+      { $group: { _id: "$type", total: { $sum: "$totalAmount" } } },
+    ]),
+  ]);
+
+  const totalBalance = Number(lobby.totalBalance);
+  const initialDeposit = Number(lobby.initialDeposit);
+
+  let totalDeposits = 0;
+  let totalSpent = 0;
+  for (const row of transactionTotals) {
+    const n = typeof row.total === "number" ? row.total : Number(row.total);
+    if (row._id === "deposit") totalDeposits += n;
+    else totalSpent += n;
+  }
+
+  const utilizationPercent =
+    totalDeposits > 0 ? Math.min(100, (totalSpent / totalDeposits) * 100) : 0;
+
+  return {
+    totalBalance,
+    initialDeposit,
+    utilizationPercent: Math.round(utilizationPercent * 100) / 100,
+    totalDeposits,
+    totalSpent,
+    memberCount,
+    transactionCount,
+  };
+};
+
 export const lobbyService = {
     createLobby,
     getUserLobbies,
     getLobbyDetails,
+    getLobbySummary,
 }
