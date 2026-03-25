@@ -1,0 +1,14 @@
+name: Ping Render health endpoint
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          # Replace the URL below with your Render app health endpoint
+          curl -fsS https://tripyfin-backend.onrender.com/health || (echo "Ping failed" && exit 1)
