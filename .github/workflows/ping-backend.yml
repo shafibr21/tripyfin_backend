@@ -11,4 +11,17 @@ jobs:
       - name: Ping health endpoint
         run: |
           # Replace the URL below with your Render app health endpoint
-          curl -fsS https://tripyfin-backend.onrender.com/health || (echo "Ping failed" && exit 1)
+          URL="https://tripyfin-backend.onrender.com/health"
+          echo "Pinging $URL"
+          # Try up to 5 times with a short delay to tolerate transient 5xx responses
+          for i in 1 2 3 4 5; do
+            if curl -fsS "$URL" -o /dev/null; then
+              echo "Ping succeeded on attempt $i"
+              exit 0
+            else
+              echo "Ping attempt $i failed; retrying in 10s..."
+              sleep 10
+            fi
+          done
+          echo "Ping failed after 5 attempts"
+          exit 1
