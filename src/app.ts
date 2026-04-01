@@ -13,9 +13,13 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1", router);
 
-// Health check for uptime monitors and GitHub Actions pinger
-app.get("/health", (_req, res) => {
-  res.status(200).json({ status: "ok" });
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+  });
 });
+
 
 export default app;
